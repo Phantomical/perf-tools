@@ -68,6 +68,7 @@ struct Trace {
 struct Parser {
     callstack: Vec<Atom>,
     start_time: Option<f64>,
+    last_time: f64,
     interner: Interner,
     stackmap: HashMap<Vec<Atom>, usize, RandomXxHashBuilder64>,
     stacks: Vec<StackFrame>,
@@ -132,14 +133,18 @@ impl Parser {
         let tid: u32 = ids.next()?.parse().unwrap();
 
         let ts = ts.trim_end_matches(":");
-        let abstime = ts.parse().unwrap();
+        let abstime_old = ts.parse().unwrap();
         let start = match self.start_time {
             Some(start) => start,
             None => {
-                self.start_time = Some(abstime);
-                abstime
+                self.start_time = Some(abstime_old);
+                abstime_old
             }
         };
+
+        // Prevent negative duration spans
+        let abstime = abstime_old.max(self.last_time);
+        self.last_time = abstime;
 
         let ts = (abstime - start) * 1_000_000.0;
         let func = rest.trim();
