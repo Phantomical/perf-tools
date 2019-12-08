@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter};
 
-use crate::interner::Interner;
+use crate::interner::{Interner, Atom};
 
 #[derive(Serialize)]
 struct Event {
@@ -21,17 +21,17 @@ struct Event {
 #[serde(tag = "ph")]
 enum EventCustom {
     #[serde(rename = "B")]
-    Begin { name: &'static str, sf: usize },
+    Begin { name: Atom, sf: usize },
     #[serde(rename = "E")]
     End { sf: usize },
     #[serde(rename = "X")]
-    Complete { name: &'static str, sf: usize },
+    Complete { name: Atom, sf: usize },
 }
 
 #[derive(Serialize)]
 struct StackFrame {
     category: &'static str,
-    name: &'static str,
+    name: Atom,
     parent: Option<usize>,
 }
 
@@ -56,10 +56,10 @@ struct Trace {
 
 #[derive(Default)]
 struct Parser {
-    callstack: Vec<&'static str>,
+    callstack: Vec<Atom>,
     start_time: Option<f64>,
     interner: Interner,
-    stackmap: HashMap<Vec<&'static str>, usize>,
+    stackmap: HashMap<Vec<Atom>, usize>,
     stacks: Vec<StackFrame>,
 }
 
@@ -87,6 +87,7 @@ impl Parser {
             name: self.callstack[size - 1],
             parent,
         });
+        self.stackmap.insert(self.callstack[..size].to_vec(), idx);
 
         idx
     }
@@ -151,7 +152,7 @@ impl Parser {
             "syscall" => {
                 let stackid = self.stackid();
                 EventCustom::Complete {
-                    name: "syscall",
+                    name: self.interner.intern("syscall"),
                     sf: stackid,
                 }
             },

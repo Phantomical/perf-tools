@@ -1,0 +1,4 @@
+pelikan_pingser 385982/385982 57487.809890980:  tr start    _start
+pelikan_pingser 385982/385982 57487.809890980:  call            _dl_start
+pelikan_pingser 385982/385982 57487.809890980:  return          _dl_start
+pelikan_pingser 385982/385982 57487.809890980:  tr end      _start
