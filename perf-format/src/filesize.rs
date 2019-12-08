@@ -58,9 +58,10 @@ impl FileSize {
             };
         }
 
-        let divisor = class.factor();
-        let count = size / divisor;
-        let frac = size / (divisor / 100);
+        let divisor = class.factor() / 100;
+        let total = size / divisor;
+        let count = total / 100;
+        let frac = total % 100;
 
         FileSize {
             count,

@@ -50,8 +50,7 @@ fn print_update(size: usize) {
     use crate::filesize::FileSize;
 
     // Erase the current line
-    eprint!("\x1B[K");
-    eprint!("Processed {}", FileSize::new(size as u64));
+    eprint!("Processed {}     \r", FileSize::new(size as u64));
 }
 
 #[derive(Serialize, Default)]
