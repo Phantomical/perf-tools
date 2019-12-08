@@ -17,6 +17,7 @@ struct Event {
     pid: u32,
     tid: u32,
     ts: f64,
+    cat: &'static str,
 }
 
 #[derive(Serialize)]
@@ -179,6 +180,7 @@ impl Parser {
             pid,
             tid,
             ts,
+            cat: "PERF"
         })
     }
 
