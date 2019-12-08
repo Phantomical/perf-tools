@@ -166,6 +166,8 @@ impl Parser {
                     sf: stackid,
                 }
             },
+            "int" => return None,
+            "iret" => return None,
             "" => panic!("Empty flag, line: {}", line),
             flag => panic!("unknown flag: {}", flag),
         };
