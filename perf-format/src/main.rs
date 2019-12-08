@@ -77,7 +77,9 @@ impl Parser {
     }
 
     fn _stacktrace_idx(&mut self, size: usize) -> usize {
-        assert!(size != 0);
+        if size == 0 {
+            return 0;
+        }
 
         if let Some(&idx) = self.stackmap.get(&self.callstack[..size]) {
             return idx;
