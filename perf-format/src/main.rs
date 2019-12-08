@@ -1,4 +1,5 @@
 mod interner;
+mod filesize;
 
 use serde::{ser::*, Serialize, Serializer};
 use std::collections::HashMap;
@@ -43,6 +44,14 @@ fn map_vec_serialize<T: Serialize, S: Serializer>(vec: &Vec<T>, ser: S) -> Resul
     }
 
     map.end()
+}
+
+fn print_update(size: usize) {
+    use crate::filesize::FileSize;
+
+    // Erase the current line
+    eprint!("\x1B[K");
+    eprint!("Processed {}", FileSize::new(size as u64));
 }
 
 #[derive(Serialize, Default)]
@@ -176,10 +185,13 @@ impl Parser {
         let mut events = Vec::new();
 
         let mut line = String::new();
+        let mut total_read = 0;
         while buf.read_line(&mut line).unwrap() != 0 {
             if let Some(evt) = self.parse_line(&line) {
                 events.push(evt);
             }
+            total_read += line.len();
+            print_update(total_read);
             line.clear();
         }
 
@@ -204,4 +216,6 @@ fn main() {
         let mut stdin = BufReader::new(std::io::stdin());
         parser.parse_all(&mut stdin).unwrap();
     }
+
+    eprintln!();
 }
