@@ -2,6 +2,7 @@ mod interner;
 
 use serde::{ser::*, Serialize, Serializer};
 use std::collections::HashMap;
+use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter};
 
 use crate::interner::Interner;
@@ -83,7 +84,7 @@ impl Parser {
         let idx = self.stacks.len();
         self.stacks.push(StackFrame {
             category: "",
-            name: self.callstack[size],
+            name: self.callstack[size - 1],
             parent,
         });
 
@@ -95,13 +96,18 @@ impl Parser {
     }
 
     fn parse_line(&mut self, line: &str) -> Option<Event> {
-        let mut segments = line.splitn(5, " ");
+        let mut segments = line.split_whitespace();
 
         let _ = segments.next()?;
         let tid_pid = segments.next()?;
         let ts = segments.next()?;
         let flags = segments.next()?;
-        let rest = segments.next()?;
+
+        let rest = {
+            let next: &str = segments.next()?;
+            let offset = next.as_ptr() as usize - line.as_ptr() as usize;
+            &line[offset..]
+        };
 
         // Skip interrupts
         if flags == "tr" {
@@ -112,6 +118,7 @@ impl Parser {
         let pid: u32 = ids.next()?.parse().unwrap();
         let tid: u32 = ids.next()?.parse().unwrap();
 
+        let ts = ts.trim_end_matches(":");
         let abstime = ts.parse().unwrap();
         let start = match self.start_time {
             Some(start) => start,
@@ -147,7 +154,8 @@ impl Parser {
                     name: "syscall",
                     sf: stackid,
                 }
-            }
+            },
+            "" => panic!("Empty flag, line: {}", line),
             flag => panic!("unknown flag: {}", flag),
         };
 
@@ -186,7 +194,13 @@ impl Parser {
 fn main() {
     let parser = Parser::new();
 
-    let mut stdin = BufReader::new(std::io::stdin());
+    let arg = std::env::args().skip(1).next();
 
-    parser.parse_all(&mut stdin).unwrap();
+    if let Some(arg) = arg {
+        let mut file = BufReader::new(File::open(arg).unwrap());
+        parser.parse_all(&mut file).unwrap();
+    } else {
+        let mut stdin = BufReader::new(std::io::stdin());
+        parser.parse_all(&mut stdin).unwrap();
+    }
 }
