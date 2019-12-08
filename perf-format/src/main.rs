@@ -5,6 +5,7 @@ use serde::{ser::*, Serialize, Serializer};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter};
+use twox_hash::RandomXxHashBuilder64;
 
 use crate::interner::{Interner, Atom};
 
@@ -67,7 +68,7 @@ struct Parser {
     callstack: Vec<Atom>,
     start_time: Option<f64>,
     interner: Interner,
-    stackmap: HashMap<Vec<Atom>, usize>,
+    stackmap: HashMap<Vec<Atom>, usize, RandomXxHashBuilder64>,
     stacks: Vec<StackFrame>,
 }
 
@@ -189,12 +190,16 @@ impl Parser {
 
         let mut line = String::new();
         let mut total_read = 0;
+        let mut linecount = 0;
         while buf.read_line(&mut line).unwrap() != 0 {
             if let Some(evt) = self.parse_line(&line) {
                 events.push(evt);
             }
             total_read += line.len();
-            print_update(total_read);
+            if linecount % 1024 == 0 {
+                print_update(total_read);
+            }
+            linecount += 1;
             line.clear();
         }
 

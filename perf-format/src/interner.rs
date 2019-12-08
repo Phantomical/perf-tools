@@ -5,9 +5,11 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::cmp::PartialEq;
 
+use twox_hash::RandomXxHashBuilder64;
+
 #[derive(Default)]
 pub struct Interner {
-    strings: HashSet<&'static str>
+    strings: HashSet<&'static str, RandomXxHashBuilder64>
 }
 
 impl Interner {
